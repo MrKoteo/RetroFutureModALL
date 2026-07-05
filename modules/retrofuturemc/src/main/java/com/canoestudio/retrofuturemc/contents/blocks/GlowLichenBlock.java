@@ -64,10 +64,21 @@ public class GlowLichenBlock extends Block implements IFluidloggable {
 
     @Override
     public IBlockState getStateForPlacement(World worldIn, BlockPos pos, EnumFacing facing, float hitX, float hitY, float hitZ, int meta, EntityLivingBase placer) {
-        return getStateForFace(facing);
+        EnumFacing attachment = facing.getOpposite();
+        if (canAttach(worldIn, pos, attachment)) {
+            return getStateForFace(attachment);
+        }
+
+        for (EnumFacing fallback : EnumFacing.values()) {
+            if (canAttach(worldIn, pos, fallback)) {
+                return getStateForFace(fallback);
+            }
+        }
+
+        return getDefaultState();
     }
 
-    private IBlockState getStateForFace(EnumFacing face) {
+    public IBlockState getStateForFace(EnumFacing face) {
         return getDefaultState()
                 .withProperty(UP, face == EnumFacing.UP)
                 .withProperty(DOWN, face == EnumFacing.DOWN)
@@ -79,7 +90,7 @@ public class GlowLichenBlock extends Block implements IFluidloggable {
 
     @Override
     public boolean canPlaceBlockOnSide(World worldIn, BlockPos pos, EnumFacing side) {
-        return canAttach(worldIn, pos, side);
+        return canAttach(worldIn, pos, side.getOpposite());
     }
 
     @Override
@@ -93,8 +104,8 @@ public class GlowLichenBlock extends Block implements IFluidloggable {
     }
 
     private boolean canAttach(World world, BlockPos pos, EnumFacing face) {
-        BlockPos supportPos = pos.offset(face.getOpposite());
-        return world.getBlockState(supportPos).isSideSolid(world, supportPos, face);
+        BlockPos supportPos = pos.offset(face);
+        return world.getBlockState(supportPos).isSideSolid(world, supportPos, face.getOpposite());
     }
 
     @Override
