@@ -14,9 +14,10 @@ import com.canoestudio.retrofuturemc.contents.mobs.glowsquid.EntityGlowSquid;
 import com.lonelyxiya.minecraft.moderncaveterrain.api.ModernCaveTerrainAPI;
 import com.lonelyxiya.minecraft.moderncaveterrain.api.ModernCaveTerrainCaveBiomeType;
 import com.lonelyxiya.minecraft.moderncaveterrain.api.ModernCaveTerrainCaveDecorationContext;
-import com.lonelyxiya.minecraft.moderncaveterrain.api.ModernCaveTerrainCaveDecorator;
 import com.lonelyxiya.minecraft.moderncaveterrain.api.ModernCaveTerrainConfig;
-import com.lonelyxiya.minecraft.moderncaveterrain.api.ModernCaveTerrainUndergroundBiomeResolver;
+import com.lonelyxiya.minecraft.moderncaveterrain.api.ModernCaveTerrainUndergroundBiomeDecorator;
+import com.lonelyxiya.minecraft.moderncaveterrain.api.ModernCaveTerrainUndergroundBiomeDefinition;
+import com.lonelyxiya.minecraft.moderncaveterrain.api.ModernCaveTerrainUndergroundBiomeSelector;
 import com.lonelyxiya.minecraft.moderncaveterrain.api.ModernCaveTerrainUndergroundBiomeSample;
 import git.jbredwards.fluidlogged_api.api.util.FluidState;
 import git.jbredwards.fluidlogged_api.api.util.FluidloggedUtils;
@@ -44,7 +45,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-public class RetroFutureWorldGenerator implements IWorldGenerator, ModernCaveTerrainCaveDecorator, ModernCaveTerrainUndergroundBiomeResolver {
+public class RetroFutureWorldGenerator implements IWorldGenerator, ModernCaveTerrainUndergroundBiomeDecorator {
     private static final IBlockState STONE = Blocks.STONE.getDefaultState().withProperty(BlockStone.VARIANT, BlockStone.EnumType.STONE);
     private static final IBlockState DEEPSLATE = ModBlocks.DeepSlate.getDefaultState();
     private static final ResourceLocation LUSH_CAVES_BIOME_ID = new ResourceLocation("retrofuturemc", "lush_caves");
@@ -80,20 +81,53 @@ public class RetroFutureWorldGenerator implements IWorldGenerator, ModernCaveTer
     private static final long WORLD_CAVE_FEATURE_SEED_SALT = 0x5246574341564546L;
     private static final long MODERN_CAVE_POSITION_SEED_SALT = 0x4D435442494F4D45L;
     private static final long MODERN_CAVE_FEATURE_SEED_SALT = 0x52464D4346454154L;
+    private static final long MODERN_LUSH_POSITION_SEED_SALT = 0x52464C555348504FL;
+    private static final long MODERN_LUSH_FEATURE_SEED_SALT = 0x52464C5553484645L;
+    private static final long MODERN_DRIPSTONE_POSITION_SEED_SALT = 0x524644524950504FL;
+    private static final long MODERN_DRIPSTONE_FEATURE_SEED_SALT = 0x5246445249504645L;
+    private static final int MODERN_UNDERGROUND_BIOME_MIN_Y = 4;
+    private static final int MODERN_UNDERGROUND_BIOME_MAX_Y = 128;
+    private static final int MODERN_UNDERGROUND_BIOME_PRIORITY = 80;
     private static final double MODERN_UNDERGROUND_MIN_DEPTH = 0.2D;
     private static final double MODERN_UNDERGROUND_MAX_DEPTH = 0.9D;
     private static final double MODERN_LUSH_MIN_HUMIDITY = 0.35D;
     private static final double MODERN_DRIPSTONE_MIN_CONTINENTALNESS = 0.35D;
     private static final boolean GENERATE_LUSH_CAVES = true;
     private static final boolean GENERATE_DRIPSTONE_CAVES = true;
-    private static boolean modernCaveTerrainDecoratorRegistered;
+    private static boolean modernCaveTerrainBiomesRegistered;
 
-    public static void registerModernCaveTerrainDecorator() {
-        if (!modernCaveTerrainDecoratorRegistered) {
-            RetroFutureWorldGenerator hooks = new RetroFutureWorldGenerator();
-            ModernCaveTerrainAPI.registerUndergroundBiomeResolver(hooks);
-            ModernCaveTerrainAPI.registerCaveDecorator(hooks);
-            modernCaveTerrainDecoratorRegistered = true;
+    public static void registerModernCaveTerrainBiomes() {
+        if (!modernCaveTerrainBiomesRegistered) {
+            RetroFutureWorldGenerator decorator = new RetroFutureWorldGenerator();
+            if (GENERATE_LUSH_CAVES) {
+                ModernCaveTerrainAPI.registerUndergroundBiome(ModernCaveTerrainUndergroundBiomeDefinition.builder(LUSH_CAVES_BIOME_ID)
+                        .caveBiomeType(ModernCaveTerrainCaveBiomeType.GENERIC_3D)
+                        .yRange(MODERN_UNDERGROUND_BIOME_MIN_Y, MODERN_UNDERGROUND_BIOME_MAX_Y)
+                        .priority(MODERN_UNDERGROUND_BIOME_PRIORITY)
+                        .selector(new ModernCaveTerrainUndergroundBiomeSelector() {
+                            @Override
+                            public double getWeight(World world, ModernCaveTerrainUndergroundBiomeSample sample) {
+                                return getModernLushSelectionWeight(sample);
+                            }
+                        })
+                        .decorator(decorator)
+                        .build());
+            }
+            if (GENERATE_DRIPSTONE_CAVES) {
+                ModernCaveTerrainAPI.registerUndergroundBiome(ModernCaveTerrainUndergroundBiomeDefinition.builder(DRIPSTONE_CAVES_BIOME_ID)
+                        .caveBiomeType(ModernCaveTerrainCaveBiomeType.GENERIC_3D)
+                        .yRange(MODERN_UNDERGROUND_BIOME_MIN_Y, MODERN_UNDERGROUND_BIOME_MAX_Y)
+                        .priority(MODERN_UNDERGROUND_BIOME_PRIORITY)
+                        .selector(new ModernCaveTerrainUndergroundBiomeSelector() {
+                            @Override
+                            public double getWeight(World world, ModernCaveTerrainUndergroundBiomeSample sample) {
+                                return getModernDripstoneSelectionWeight(sample);
+                            }
+                        })
+                        .decorator(decorator)
+                        .build());
+            }
+            modernCaveTerrainBiomesRegistered = true;
         }
     }
 
@@ -114,7 +148,7 @@ public class RetroFutureWorldGenerator implements IWorldGenerator, ModernCaveTer
                     blockZ + random.nextInt(16)));
         }
 
-        if (!modernCaveTerrainDecoratorRegistered || !isModernCaveTerrainActive(world)) {
+        if (!modernCaveTerrainBiomesRegistered || !isModernCaveTerrainActive(world)) {
             decorateCavesInWorld(world, createWorldCavePositionRandom(world, chunkX, chunkZ),
                     createWorldCaveFeatureRandom(world, chunkX, chunkZ), blockX, blockZ);
         }
@@ -122,14 +156,18 @@ public class RetroFutureWorldGenerator implements IWorldGenerator, ModernCaveTer
     }
 
     @Override
-    public void decorate(ModernCaveTerrainCaveDecorationContext context) {
+    public void decorate(ModernCaveTerrainCaveDecorationContext context, ModernCaveTerrainUndergroundBiomeDefinition definition) {
         World world = context.getWorld();
+        CaveStyle targetStyle = getModernDefinitionStyle(definition);
+        if (targetStyle == CaveStyle.NORMAL) {
+            return;
+        }
         if (!context.getConfig().isMojang118StyleCavesEnabled()) {
             return;
         }
 
-        Random positionRandom = createModernCavePositionRandom(world, context.getChunkX(), context.getChunkZ());
-        Random decorationRandom = createModernCaveFeatureRandom(world, context.getChunkX(), context.getChunkZ());
+        Random positionRandom = createModernCavePositionRandom(world, context.getChunkX(), context.getChunkZ(), getModernPositionSalt(targetStyle));
+        Random decorationRandom = createModernCaveFeatureRandom(world, context.getChunkX(), context.getChunkZ(), getModernFeatureSalt(targetStyle));
         int minY = getModernCaveMinY(world, context.getConfig());
         int maxY = getModernCaveMaxY(world, context.getConfig());
         if (maxY <= minY) {
@@ -147,32 +185,26 @@ public class RetroFutureWorldGenerator implements IWorldGenerator, ModernCaveTer
             }
 
             ModernCaveTerrainUndergroundBiomeSample biomeSample = context.sampleUndergroundBiomeLocal(x, y, z);
-            CaveStyle style = classifyModernCaveStyle(biomeSample);
-            double strength = getModernCaveStyleStrength(biomeSample, style);
-            if (GENERATE_LUSH_CAVES && style == CaveStyle.LUSH) {
+            if (!matchesModernDefinition(definition, biomeSample)) {
+                continue;
+            }
+
+            double strength = getModernCaveStyleStrength(biomeSample, targetStyle);
+            if (strength <= 0.0D) {
+                continue;
+            }
+            if (targetStyle == CaveStyle.LUSH) {
                 decorateLushPrimer(context, decorationRandom, x, y, z, strength);
-            } else if (GENERATE_DRIPSTONE_CAVES && style == CaveStyle.DRIPSTONE) {
+            } else if (targetStyle == CaveStyle.DRIPSTONE) {
                 decorateDripstonePrimer(context, decorationRandom, x, y, z, strength);
-            } else if (decorationRandom.nextInt(5) == 0) {
-                placeGlowLichenPrimer(context, decorationRandom, x, y, z);
             }
         }
     }
 
-    @Override
-    public ModernCaveTerrainUndergroundBiomeSample resolve(World world, ModernCaveTerrainUndergroundBiomeSample sample) {
-        CaveStyle style = classifyModernCaveStyle(sample);
-        if (GENERATE_LUSH_CAVES && style == CaveStyle.LUSH) {
-            return sample.withBiome(ModernCaveTerrainCaveBiomeType.GENERIC_3D, LUSH_CAVES_BIOME_ID);
-        }
-        if (GENERATE_DRIPSTONE_CAVES && style == CaveStyle.DRIPSTONE) {
-            return sample.withBiome(ModernCaveTerrainCaveBiomeType.GENERIC_3D, DRIPSTONE_CAVES_BIOME_ID);
-        }
-        return null;
-    }
-
     public static boolean isModernCaveTerrainActive(World world) {
-        return ModernCaveTerrainAPI.getConfigForDimension(world.provider.getDimension()).isMojang118StyleCavesEnabled();
+        int dimension = world.provider.getDimension();
+        return ModernCaveTerrainAPI.canGenerateInDimension(dimension)
+                && ModernCaveTerrainAPI.getConfigForDimension(dimension).isMojang118StyleCavesEnabled();
     }
 
     public static int getModernCaveMinY(World world, ModernCaveTerrainConfig config) {
@@ -187,6 +219,10 @@ public class RetroFutureWorldGenerator implements IWorldGenerator, ModernCaveTer
         return new Random(getModernCaveSeed(world, chunkX, chunkZ, MODERN_CAVE_POSITION_SEED_SALT));
     }
 
+    public static Random createModernCavePositionRandom(World world, int chunkX, int chunkZ, long salt) {
+        return new Random(getModernCaveSeed(world, chunkX, chunkZ, salt));
+    }
+
     public static Random createWorldCavePositionRandom(World world, int chunkX, int chunkZ) {
         return new Random(getWorldCaveSeed(world, chunkX, chunkZ, WORLD_CAVE_POSITION_SEED_SALT));
     }
@@ -199,12 +235,54 @@ public class RetroFutureWorldGenerator implements IWorldGenerator, ModernCaveTer
         return new Random(getModernCaveSeed(world, chunkX, chunkZ, MODERN_CAVE_FEATURE_SEED_SALT));
     }
 
+    private static Random createModernCaveFeatureRandom(World world, int chunkX, int chunkZ, long salt) {
+        return new Random(getModernCaveSeed(world, chunkX, chunkZ, salt));
+    }
+
     private static long getModernCaveSeed(World world, int chunkX, int chunkZ, long salt) {
         return world.getSeed() ^ (long)chunkX * 341873128712L ^ (long)chunkZ * 132897987541L ^ salt;
     }
 
     private static long getWorldCaveSeed(World world, int chunkX, int chunkZ, long salt) {
         return world.getSeed() ^ (long)chunkX * 132897987541L ^ (long)chunkZ * 341873128712L ^ salt;
+    }
+
+    private static long getModernPositionSalt(CaveStyle style) {
+        if (style == CaveStyle.LUSH) {
+            return MODERN_LUSH_POSITION_SEED_SALT;
+        }
+        if (style == CaveStyle.DRIPSTONE) {
+            return MODERN_DRIPSTONE_POSITION_SEED_SALT;
+        }
+        return MODERN_CAVE_POSITION_SEED_SALT;
+    }
+
+    private static long getModernFeatureSalt(CaveStyle style) {
+        if (style == CaveStyle.LUSH) {
+            return MODERN_LUSH_FEATURE_SEED_SALT;
+        }
+        if (style == CaveStyle.DRIPSTONE) {
+            return MODERN_DRIPSTONE_FEATURE_SEED_SALT;
+        }
+        return MODERN_CAVE_FEATURE_SEED_SALT;
+    }
+
+    private static CaveStyle getModernDefinitionStyle(ModernCaveTerrainUndergroundBiomeDefinition definition) {
+        if (definition == null) {
+            return CaveStyle.NORMAL;
+        }
+        if (LUSH_CAVES_BIOME_ID.equals(definition.getId())) {
+            return CaveStyle.LUSH;
+        }
+        if (DRIPSTONE_CAVES_BIOME_ID.equals(definition.getId())) {
+            return CaveStyle.DRIPSTONE;
+        }
+        return CaveStyle.NORMAL;
+    }
+
+    private static boolean matchesModernDefinition(ModernCaveTerrainUndergroundBiomeDefinition definition,
+                                                   ModernCaveTerrainUndergroundBiomeSample sample) {
+        return definition != null && sample != null && definition.getId().equals(sample.getBiomeId());
     }
 
     public static CaveStyle classifyModernCaveStyle(ModernCaveTerrainUndergroundBiomeSample sample) {
@@ -224,12 +302,12 @@ public class RetroFutureWorldGenerator implements IWorldGenerator, ModernCaveTer
             return CaveStyle.NORMAL;
         }
 
-        double lushScore = getModernLushScore(sample);
-        double dripstoneScore = getModernDripstoneScore(sample);
+        double lushScore = getModernLushSelectionWeight(sample);
+        double dripstoneScore = getModernDripstoneSelectionWeight(sample);
         if (lushScore <= 0.0D && dripstoneScore <= 0.0D) {
             return CaveStyle.NORMAL;
         }
-        if (lushScore > 0.0D && (lushScore >= dripstoneScore || sample.getHumidity() >= 0.82D)) {
+        if (lushScore > 0.0D && lushScore >= dripstoneScore) {
             return CaveStyle.LUSH;
         }
         return CaveStyle.DRIPSTONE;
@@ -243,6 +321,42 @@ public class RetroFutureWorldGenerator implements IWorldGenerator, ModernCaveTer
             return clamp(getModernDripstoneScore(sample) * getDepthBandStrength(sample) * getEdgeStrength(sample), 0.0D, 1.0D);
         }
         return 0.0D;
+    }
+
+    private static double getModernLushSelectionWeight(ModernCaveTerrainUndergroundBiomeSample sample) {
+        if (!canSelectModernUndergroundBiome(sample)) {
+            return 0.0D;
+        }
+
+        double humidity = getModernLushScore(sample);
+        double depth = getDepthBandStrength(sample);
+        double edge = getEdgeStrength(sample);
+        double weirdness = clampedMap(sample.getWeirdness(), -0.55D, 0.75D, 0.72D, 1.08D);
+        double surface = getLushSurfaceBias(sample.getSurfaceBiome());
+        double dripstoneCompetition = clampedMap(sample.getContinentalness(), MODERN_DRIPSTONE_MIN_CONTINENTALNESS, 0.95D, 1.0D, 0.62D);
+        return clamp(humidity * depth * edge * weirdness * surface * dripstoneCompetition, 0.0D, 1.0D);
+    }
+
+    private static double getModernDripstoneSelectionWeight(ModernCaveTerrainUndergroundBiomeSample sample) {
+        if (!canSelectModernUndergroundBiome(sample)) {
+            return 0.0D;
+        }
+
+        double continentalness = getModernDripstoneScore(sample);
+        double depth = getDepthBandStrength(sample);
+        double edge = getEdgeStrength(sample);
+        double dryness = clampedMap(sample.getHumidity(), 0.88D, -0.15D, 0.45D, 1.08D);
+        double weirdness = clampedMap(Math.abs(sample.getWeirdness()), 0.08D, 0.92D, 0.82D, 1.08D);
+        double surface = getDripstoneSurfaceBias(sample.getSurfaceBiome());
+        double lushCompetition = clampedMap(sample.getHumidity(), MODERN_LUSH_MIN_HUMIDITY, 0.98D, 1.0D, 0.58D);
+        return clamp(continentalness * depth * edge * dryness * weirdness * surface * lushCompetition, 0.0D, 1.0D);
+    }
+
+    private static boolean canSelectModernUndergroundBiome(ModernCaveTerrainUndergroundBiomeSample sample) {
+        return sample != null
+                && sample.getCaveBiomeType() == ModernCaveTerrainCaveBiomeType.GENERIC_3D
+                && sample.getDepth() >= MODERN_UNDERGROUND_MIN_DEPTH
+                && sample.getDepth() <= MODERN_UNDERGROUND_MAX_DEPTH;
     }
 
     private static double getModernLushScore(ModernCaveTerrainUndergroundBiomeSample sample) {
@@ -261,6 +375,46 @@ public class RetroFutureWorldGenerator implements IWorldGenerator, ModernCaveTer
 
     private static double getEdgeStrength(ModernCaveTerrainUndergroundBiomeSample sample) {
         return 0.35D + sample.getEdgeFactor() * 0.65D;
+    }
+
+    private static double getLushSurfaceBias(Biome biome) {
+        double bias = 1.0D;
+        if (hasBiomeType(biome, BiomeDictionary.Type.WET)
+                || hasBiomeType(biome, BiomeDictionary.Type.JUNGLE)
+                || hasBiomeType(biome, BiomeDictionary.Type.SWAMP)) {
+            bias += 0.18D;
+        }
+        if (hasBiomeType(biome, BiomeDictionary.Type.DRY)
+                || hasBiomeType(biome, BiomeDictionary.Type.MESA)
+                || hasBiomeType(biome, BiomeDictionary.Type.SANDY)) {
+            bias -= 0.18D;
+        }
+        if (hasBiomeType(biome, BiomeDictionary.Type.OCEAN)) {
+            bias -= 0.22D;
+        }
+        return clamp(bias, 0.68D, 1.22D);
+    }
+
+    private static double getDripstoneSurfaceBias(Biome biome) {
+        double bias = 1.0D;
+        if (hasBiomeType(biome, BiomeDictionary.Type.DRY)
+                || hasBiomeType(biome, BiomeDictionary.Type.MESA)
+                || hasBiomeType(biome, BiomeDictionary.Type.SANDY)
+                || hasBiomeType(biome, BiomeDictionary.Type.MOUNTAIN)
+                || hasBiomeType(biome, BiomeDictionary.Type.HILLS)) {
+            bias += 0.16D;
+        }
+        if (hasBiomeType(biome, BiomeDictionary.Type.WET)
+                || hasBiomeType(biome, BiomeDictionary.Type.JUNGLE)
+                || hasBiomeType(biome, BiomeDictionary.Type.SWAMP)
+                || hasBiomeType(biome, BiomeDictionary.Type.OCEAN)) {
+            bias -= 0.16D;
+        }
+        return clamp(bias, 0.7D, 1.2D);
+    }
+
+    private static boolean hasBiomeType(Biome biome, BiomeDictionary.Type type) {
+        return biome != null && BiomeDictionary.hasType(biome, type);
     }
 
     private void generateOres(World world, Random random, int blockX, int blockZ) {
