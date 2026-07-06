@@ -37,13 +37,40 @@ public class ClientProxy extends CommonProxy {
 
     @SubscribeEvent
     public static void registerModels(ModelRegistryEvent event) {
-        ModelLoader.setCustomModelResourceLocation(ModItems.WARDEN_EGG, 0,
-            new ModelResourceLocation(RTWU.ID + ":warden_egg", "inventory"));
+        registerItemModel(ModItems.WARDEN_EGG);
+        registerItemModel(ModItems.ECHO_SHARD);
+        registerItemModel(ModItems.DISC_FRAGMENT_5);
+        registerItemModel(ModItems.RECOVERY_COMPASS);
+        registerItemModel(ModItems.TADPOLE_BUCKET);
+        registerItemModel(ModItems.FROG_SPAWN_EGG);
+        registerItemModel(ModItems.TADPOLE_SPAWN_EGG);
         registerBlockModel(ModBlocks.SCULK);
         registerBlockModel(ModBlocks.SCULK_VEIN);
         registerBlockModel(ModBlocks.SCULK_SENSOR);
         registerBlockModel(ModBlocks.SCULK_SHRIEKER);
         registerBlockModel(ModBlocks.SCULK_CATALYST);
+        registerBlockModel(ModBlocks.MUD);
+        registerBlockModel(ModBlocks.PACKED_MUD);
+        registerBlockModel(ModBlocks.MUD_BRICKS);
+        registerBlockModel(ModBlocks.MANGROVE_LOG);
+        registerBlockModel(ModBlocks.STRIPPED_MANGROVE_LOG);
+        registerBlockModel(ModBlocks.MANGROVE_PLANKS);
+        registerBlockModel(ModBlocks.MANGROVE_LEAVES);
+        registerBlockModel(ModBlocks.MANGROVE_ROOTS);
+        registerBlockModel(ModBlocks.MUDDY_MANGROVE_ROOTS);
+        registerBlockModel(ModBlocks.MANGROVE_PROPAGULE);
+        registerBlockModel(ModBlocks.FROGSPAWN);
+        registerBlockModel(ModBlocks.OCHRE_FROGLIGHT);
+        registerBlockModel(ModBlocks.VERDANT_FROGLIGHT);
+        registerBlockModel(ModBlocks.PEARLESCENT_FROGLIGHT);
+        registerBlockModel(ModBlocks.REINFORCED_DEEPSLATE);
+    }
+
+    private static void registerItemModel(Item item) {
+        ResourceLocation name = item.getRegistryName();
+        if (name != null) {
+            ModelLoader.setCustomModelResourceLocation(item, 0, new ModelResourceLocation(name, "inventory"));
+        }
     }
 
     private static void registerBlockModel(Block block) {

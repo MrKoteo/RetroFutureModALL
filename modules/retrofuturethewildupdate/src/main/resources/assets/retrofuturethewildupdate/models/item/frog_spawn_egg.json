@@ -1,0 +1,6 @@
+{
+  "parent": "item/generated",
+  "textures": {
+    "layer0": "retrofuturethewildupdate:item/frog_spawn_egg"
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "parent": "block/leaves",
+  "textures": {
+    "all": "retrofuturethewildupdate:block/mangrove_leaves"
+  }
+}
