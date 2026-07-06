@@ -42,6 +42,9 @@ public class BigDripleaf extends BlockBush implements IGrowable, IFluidloggable 
     public static final String name = "Big_Dripleaf";
     public static final SoundType DRIPLEAF = new SoundType(1.0F, 1.0F, ModSoundHandler.BLOCK_BIG_DRIPLEAF_BREAK, ModSoundHandler.BLOCK_BIG_DRIPLEAF_STEP, ModSoundHandler.BLOCK_BIG_DRIPLEAF_PLACE, ModSoundHandler.BLOCK_BIG_DRIPLEAF_HIT, ModSoundHandler.BLOCK_BIG_DRIPLEAF_FALL);
     public static final int MAX_GROWTH_HEIGHT = 5;
+    private static final int UNSTABLE_TILT_DELAY = 10;
+    private static final int PARTIAL_TILT_DELAY = 10;
+    private static final int FULL_TILT_DELAY = 100;
 
     protected static final AxisAlignedBB HALF_AABB = new AxisAlignedBB(0.0D, 0.0D, 0.0D, 1.0D, 0.5D, 1.0D);
     protected static final AxisAlignedBB DRIP_AABB = new AxisAlignedBB(0.0D, 0.0D, 0.0D, 1.0D, 0.9375D, 1.0D);
@@ -92,38 +95,25 @@ public class BigDripleaf extends BlockBush implements IGrowable, IFluidloggable 
 
     public void updateTick(World worldIn, BlockPos pos, IBlockState state, Random rand)
     {
+        if (worldIn.isBlockPowered(pos))
+        {
+            resetTilt(worldIn, pos, state);
+            return;
+        }
+
         EnumTilt tilt = state.getValue(TILT);
         
         if (tilt == EnumTilt.UNSTABLE)
         {
-            if (!worldIn.isBlockPowered(pos))
-            {
-                worldIn.setBlockState(pos, state.withProperty(TILT, EnumTilt.NONE), 2);
-            }
+            setTiltAndScheduleTick(worldIn, pos, state, EnumTilt.PARTIAL, true);
         }
         else if (tilt == EnumTilt.PARTIAL)
         {
-            AxisAlignedBB checkAABB = new AxisAlignedBB(pos.getX(), pos.getY() + 1, pos.getZ(), pos.getX() + 1, pos.getY() + 2, pos.getZ() + 1);
-            if (worldIn.getEntitiesWithinAABBExcludingEntity(null, checkAABB).isEmpty())
-            {
-                worldIn.setBlockState(pos, state.withProperty(TILT, EnumTilt.NONE), 2);
-                worldIn.playSound(null, pos, ModSoundHandler.BLOCK_BIG_DRIPLEAF_BREAK, SoundCategory.BLOCKS, 0.8F, 0.8F);
-            }
-            else
-            {
-                worldIn.setBlockState(pos, state.withProperty(TILT, EnumTilt.FULL), 2);
-                worldIn.playSound(null, pos, ModSoundHandler.BLOCK_BIG_DRIPLEAF_BREAK, SoundCategory.BLOCKS, 0.8F, 0.8F);
-                worldIn.scheduleUpdate(pos, this, 100);
-            }
+            setTiltAndScheduleTick(worldIn, pos, state, EnumTilt.FULL, true);
         }
         else if (tilt == EnumTilt.FULL)
         {
-            AxisAlignedBB checkAABB = new AxisAlignedBB(pos.getX(), pos.getY() + 1, pos.getZ(), pos.getX() + 1, pos.getY() + 2, pos.getZ() + 1);
-            if (worldIn.getEntitiesWithinAABBExcludingEntity(null, checkAABB).isEmpty())
-            {
-                worldIn.setBlockState(pos, state.withProperty(TILT, EnumTilt.NONE), 2);
-                worldIn.playSound(null, pos, ModSoundHandler.BLOCK_BIG_DRIPLEAF_BREAK, SoundCategory.BLOCKS, 0.8F, 0.8F);
-            }
+            resetTilt(worldIn, pos, state);
         }
     }
 
@@ -133,11 +123,9 @@ public class BigDripleaf extends BlockBush implements IGrowable, IFluidloggable 
         
         EnumTilt tilt = state.getValue(TILT);
 
-        if (tilt == EnumTilt.NONE)
+        if (tilt == EnumTilt.NONE && canEntityTilt(pos, entityIn) && !worldIn.isBlockPowered(pos))
         {
-            worldIn.setBlockState(pos, state.withProperty(TILT, EnumTilt.PARTIAL), 2);
-            worldIn.playSound(null, pos, ModSoundHandler.BLOCK_BIG_DRIPLEAF_BREAK, SoundCategory.BLOCKS, 0.8F, 0.8F);
-            worldIn.scheduleUpdate(pos, this, 10);
+            setTiltAndScheduleTick(worldIn, pos, state, EnumTilt.UNSTABLE, false);
         }
     }
 
@@ -155,26 +143,71 @@ public class BigDripleaf extends BlockBush implements IGrowable, IFluidloggable 
 
         if (!worldIn.isRemote)
         {
-            boolean isPowered = worldIn.isBlockPowered(pos);
-            EnumTilt tilt = state.getValue(TILT);
-
-            if (isPowered)
+            if (worldIn.isBlockPowered(pos))
             {
-                if (tilt != EnumTilt.UNSTABLE)
-                {
-                    worldIn.setBlockState(pos, state.withProperty(TILT, EnumTilt.UNSTABLE), 2);
-                }
-            }
-            else
-            {
-                if (tilt == EnumTilt.UNSTABLE)
-                {
-                    worldIn.setBlockState(pos, state.withProperty(TILT, EnumTilt.NONE), 2);
-                }
+                resetTilt(worldIn, pos, state);
             }
         }
         scheduleContainedFluidTick(worldIn, pos, state);
         super.neighborChanged(state, worldIn, pos, blockIn, fromPos);
+    }
+
+    private boolean canEntityTilt(BlockPos pos, Entity entity)
+    {
+        return entity.onGround && entity.posY > (double)((float)pos.getY() + 0.6875F);
+    }
+
+    private void setTiltAndScheduleTick(World world, BlockPos pos, IBlockState state, EnumTilt tilt, boolean playSound)
+    {
+        if (state.getValue(TILT) == tilt)
+        {
+            return;
+        }
+
+        world.setBlockState(pos, state.withProperty(TILT, tilt), 2);
+        if (playSound)
+        {
+            playTiltSound(world, pos);
+        }
+
+        int delay = getTiltDelay(tilt);
+        if (delay > 0)
+        {
+            world.scheduleUpdate(pos, this, delay);
+        }
+    }
+
+    private void resetTilt(World world, BlockPos pos, IBlockState state)
+    {
+        if (state.getValue(TILT) == EnumTilt.NONE)
+        {
+            return;
+        }
+
+        world.setBlockState(pos, state.withProperty(TILT, EnumTilt.NONE), 2);
+        playTiltSound(world, pos);
+    }
+
+    private int getTiltDelay(EnumTilt tilt)
+    {
+        if (tilt == EnumTilt.UNSTABLE)
+        {
+            return UNSTABLE_TILT_DELAY;
+        }
+        if (tilt == EnumTilt.PARTIAL)
+        {
+            return PARTIAL_TILT_DELAY;
+        }
+        if (tilt == EnumTilt.FULL)
+        {
+            return FULL_TILT_DELAY;
+        }
+        return -1;
+    }
+
+    private void playTiltSound(World world, BlockPos pos)
+    {
+        world.playSound(null, pos, ModSoundHandler.BLOCK_BIG_DRIPLEAF_BREAK, SoundCategory.BLOCKS, 1.0F, 0.8F + world.rand.nextFloat() * 0.4F);
     }
 
     public boolean canPlaceBlockAt(World worldIn, BlockPos pos)
