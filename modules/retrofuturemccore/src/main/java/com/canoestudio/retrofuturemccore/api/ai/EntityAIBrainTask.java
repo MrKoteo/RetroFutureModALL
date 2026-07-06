@@ -1,6 +1,7 @@
 package com.canoestudio.retrofuturemccore.api.ai;
 
 import net.minecraft.entity.EntityLivingBase;
+import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.ai.EntityAIBase;
 import net.minecraft.world.WorldServer;
 
@@ -19,6 +20,18 @@ public class EntityAIBrainTask<E extends EntityLivingBase> extends EntityAIBase 
         this.brain = brain;
         this.brainResolved = brain != null;
         this.setMutexBits(0);
+    }
+
+    public static <E extends EntityLiving> EntityAIBrainTask<E> addBrainTask(E entity, int priority) {
+        EntityAIBrainTask<E> task = new EntityAIBrainTask<E>(entity);
+        entity.tasks.addTask(priority, task);
+        return task;
+    }
+
+    public static <E extends EntityLiving> EntityAIBrainTask<E> addBrainTask(E entity, int priority, Brain<E> brain) {
+        EntityAIBrainTask<E> task = new EntityAIBrainTask<E>(entity, brain);
+        entity.tasks.addTask(priority, task);
+        return task;
     }
 
     @Override

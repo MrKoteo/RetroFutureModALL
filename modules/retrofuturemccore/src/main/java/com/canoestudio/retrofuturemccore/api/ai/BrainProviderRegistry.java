@@ -31,12 +31,17 @@ public final class BrainProviderRegistry {
 
     public static synchronized <E extends EntityLivingBase> Brain<E> createBrain(E entity) {
         BrainFactory<? super E> factory = findFactoryForEntity(entity);
-        return factory == null ? null : factory.createBrain(entity);
+        return factory == null ? null : castBrain(factory.createBrain(entity));
     }
 
     @SuppressWarnings("unchecked")
     private static <E extends EntityLivingBase> BrainFactory<? super E> findFactoryForEntity(E entity) {
         return (BrainFactory<? super E>) findFactory(entity.getClass());
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <E extends EntityLivingBase> Brain<E> castBrain(Brain<? super E> brain) {
+        return (Brain<E>) brain;
     }
 
     private static BrainFactory<? extends EntityLivingBase> findFactory(Class<?> entityClass) {
