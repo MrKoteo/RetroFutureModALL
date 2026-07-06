@@ -14,9 +14,9 @@ public class ModItems {
     public static final Item ECHO_SHARD = simpleItem("echo_shard", CreativeTabs.MATERIALS);
     public static final Item DISC_FRAGMENT_5 = simpleItem("disc_fragment_5", CreativeTabs.MISC);
     public static final Item RECOVERY_COMPASS = simpleItem("recovery_compass", CreativeTabs.TOOLS);
-    public static final Item TADPOLE_BUCKET = simpleItem("tadpole_bucket", CreativeTabs.MISC).setMaxStackSize(1);
-    public static final Item FROG_SPAWN_EGG = simpleItem("frog_spawn_egg", CreativeTabs.MISC).setMaxStackSize(64);
-    public static final Item TADPOLE_SPAWN_EGG = simpleItem("tadpole_spawn_egg", CreativeTabs.MISC).setMaxStackSize(64);
+    public static final Item TADPOLE_BUCKET = new ItemTadpoleBucket();
+    public static final Item FROG_SPAWN_EGG = new ItemWildSpawnEgg("frog_spawn_egg", com.canoestudio.retrofuturethewildupdate.entity.ModEntities.FROG_NAME);
+    public static final Item TADPOLE_SPAWN_EGG = new ItemWildSpawnEgg("tadpole_spawn_egg", com.canoestudio.retrofuturethewildupdate.entity.ModEntities.TADPOLE_NAME);
 
     @SubscribeEvent
     public static void registerItems(RegistryEvent.Register<Item> event) {

@@ -3,6 +3,10 @@ package com.canoestudio.retrofuturethewildupdate.proxy;
 import com.canoestudio.retrofuturethewildupdate.RTWU;
 import com.canoestudio.retrofuturethewildupdate.block.ModBlocks;
 import com.canoestudio.retrofuturethewildupdate.client.particle.ParticleSonicBoom;
+import com.canoestudio.retrofuturethewildupdate.client.renderer.RenderFrog;
+import com.canoestudio.retrofuturethewildupdate.client.renderer.RenderTadpole;
+import com.canoestudio.retrofuturethewildupdate.entity.EntityFrog;
+import com.canoestudio.retrofuturethewildupdate.entity.EntityTadpole;
 import com.canoestudio.retrofuturethewildupdate.entity.Warden;
 import com.canoestudio.retrofuturethewildupdate.client.renderer.RenderWarden;
 import com.canoestudio.retrofuturethewildupdate.item.ModItems;
@@ -27,6 +31,8 @@ public class ClientProxy extends CommonProxy {
     public void preInit() {
         super.preInit();
         RenderingRegistry.registerEntityRenderingHandler(Warden.class, manager -> new RenderWarden(manager));
+        RenderingRegistry.registerEntityRenderingHandler(EntityFrog.class, manager -> new RenderFrog(manager));
+        RenderingRegistry.registerEntityRenderingHandler(EntityTadpole.class, manager -> new RenderTadpole(manager));
     }
 
     @Override

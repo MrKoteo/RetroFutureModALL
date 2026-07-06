@@ -1,5 +1,6 @@
 {
   "variants": {
-    "normal": { "model": "retrofuturethewildupdate:mangrove_propagule" }
+    "hanging=false": { "model": "retrofuturethewildupdate:mangrove_propagule" },
+    "hanging=true": { "model": "retrofuturethewildupdate:mangrove_propagule_hanging" }
   }
 }

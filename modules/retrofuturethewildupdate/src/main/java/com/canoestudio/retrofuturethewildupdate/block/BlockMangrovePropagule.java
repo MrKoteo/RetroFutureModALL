@@ -6,6 +6,8 @@ import net.minecraft.block.BlockBush;
 import net.minecraft.block.IGrowable;
 import net.minecraft.block.SoundType;
 import net.minecraft.block.material.Material;
+import net.minecraft.block.properties.PropertyBool;
+import net.minecraft.block.state.BlockStateContainer;
 import net.minecraft.block.state.BlockFaceShape;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.creativetab.CreativeTabs;
@@ -23,6 +25,7 @@ import java.util.Random;
 
 public class BlockMangrovePropagule extends BlockBush implements IGrowable {
 
+    public static final PropertyBool HANGING = PropertyBool.create("hanging");
     private static final AxisAlignedBB AABB = new AxisAlignedBB(0.28125D, 0.0D, 0.28125D, 0.71875D, 0.9375D, 0.71875D);
 
     public BlockMangrovePropagule() {
@@ -32,6 +35,7 @@ public class BlockMangrovePropagule extends BlockBush implements IGrowable {
         this.setCreativeTab(CreativeTabs.DECORATIONS);
         this.setHardness(0.0f);
         this.setSoundType(SoundType.PLANT);
+        this.setDefaultState(this.blockState.getBaseState().withProperty(HANGING, false));
     }
 
     @Override
@@ -39,6 +43,16 @@ public class BlockMangrovePropagule extends BlockBush implements IGrowable {
         Block block = state.getBlock();
         return block == Blocks.GRASS || block == Blocks.DIRT || block == Blocks.FARMLAND
             || block == ModBlocks.MUD || block == ModBlocks.MANGROVE_ROOTS || block == ModBlocks.MUDDY_MANGROVE_ROOTS;
+    }
+
+    @Override
+    public boolean canPlaceBlockAt(World worldIn, BlockPos pos) {
+        return this.canStandOn(worldIn, pos) || this.canHangFrom(worldIn, pos);
+    }
+
+    @Override
+    public boolean canBlockStay(World worldIn, BlockPos pos, IBlockState state) {
+        return state.getValue(HANGING) ? this.canHangFrom(worldIn, pos) : this.canStandOn(worldIn, pos);
     }
 
     @Override
@@ -69,12 +83,12 @@ public class BlockMangrovePropagule extends BlockBush implements IGrowable {
 
     @Override
     public boolean canGrow(World worldIn, BlockPos pos, IBlockState state, boolean isClient) {
-        return true;
+        return !state.getValue(HANGING) && this.canStandOn(worldIn, pos);
     }
 
     @Override
     public boolean canUseBonemeal(World worldIn, Random rand, BlockPos pos, IBlockState state) {
-        return rand.nextFloat() < 0.45f;
+        return !state.getValue(HANGING) && rand.nextFloat() < 0.45f;
     }
 
     @Override
@@ -117,5 +131,28 @@ public class BlockMangrovePropagule extends BlockBush implements IGrowable {
             }
         }
         return true;
+    }
+
+    @Override
+    public IBlockState getStateFromMeta(int meta) {
+        return this.getDefaultState().withProperty(HANGING, (meta & 1) != 0);
+    }
+
+    @Override
+    public int getMetaFromState(IBlockState state) {
+        return state.getValue(HANGING) ? 1 : 0;
+    }
+
+    @Override
+    protected BlockStateContainer createBlockState() {
+        return new BlockStateContainer(this, HANGING);
+    }
+
+    private boolean canStandOn(World world, BlockPos pos) {
+        return this.canSustainBush(world.getBlockState(pos.down()));
+    }
+
+    private boolean canHangFrom(World world, BlockPos pos) {
+        return world.getBlockState(pos.up()).getBlock() == ModBlocks.MANGROVE_LEAVES;
     }
 }
