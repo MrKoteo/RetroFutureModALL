@@ -32,8 +32,6 @@ public class DarknessFogHandler {
     private static boolean hadDarknessLastTick = false;
     private static float heartbeatPulse = 0.0f;
     private static boolean forcedHotbarLightmap = false;
-    private static float previousHotbarLightmapX = 0.0f;
-    private static float previousHotbarLightmapY = 0.0f;
 
     private static final float FOG_DENSITY_MAX = 1.2f;
     private static final float FOG_DENSITY_MIN = 0.15f;
@@ -158,32 +156,32 @@ public class DarknessFogHandler {
         int sw = sr.getScaledWidth();
         int sh = sr.getScaledHeight();
 
-        GlStateManager.disableDepth();
-        GlStateManager.depthMask(false);
-        GlStateManager.enableBlend();
-        GlStateManager.blendFunc(
-            GlStateManager.SourceFactor.SRC_ALPHA,
-            GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA
-        );
-
         GlStateManager.pushMatrix();
-        Minecraft.getMinecraft().getTextureManager().bindTexture(VIGNETTE_TEX);
+        try {
+            GlStateManager.disableDepth();
+            GlStateManager.depthMask(false);
+            GlStateManager.enableBlend();
+            GlStateManager.blendFunc(
+                GlStateManager.SourceFactor.SRC_ALPHA,
+                GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA
+            );
+            GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
 
-        Tessellator tessellator = Tessellator.getInstance();
-        BufferBuilder buffer = tessellator.getBuffer();
-        buffer.begin(7, DefaultVertexFormats.POSITION_TEX_COLOR);
-        int a = (int) (alpha * 255);
-        buffer.pos(0.0, sh, -90.0).tex(0.0, 1.0).color(0, 0, 0, a).endVertex();
-        buffer.pos(sw, sh, -90.0).tex(1.0, 1.0).color(0, 0, 0, a).endVertex();
-        buffer.pos(sw, 0.0, -90.0).tex(1.0, 0.0).color(0, 0, 0, a).endVertex();
-        buffer.pos(0.0, 0.0, -90.0).tex(0.0, 0.0).color(0, 0, 0, a).endVertex();
-        tessellator.draw();
+            Minecraft.getMinecraft().getTextureManager().bindTexture(VIGNETTE_TEX);
 
-        GlStateManager.popMatrix();
-        GlStateManager.depthMask(true);
-        GlStateManager.enableDepth();
-        GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
-        GlStateManager.disableBlend();
+            Tessellator tessellator = Tessellator.getInstance();
+            BufferBuilder buffer = tessellator.getBuffer();
+            buffer.begin(7, DefaultVertexFormats.POSITION_TEX_COLOR);
+            int a = (int) (alpha * 255);
+            buffer.pos(0.0, sh, -90.0).tex(0.0, 1.0).color(0, 0, 0, a).endVertex();
+            buffer.pos(sw, sh, -90.0).tex(1.0, 1.0).color(0, 0, 0, a).endVertex();
+            buffer.pos(sw, 0.0, -90.0).tex(1.0, 0.0).color(0, 0, 0, a).endVertex();
+            buffer.pos(0.0, 0.0, -90.0).tex(0.0, 0.0).color(0, 0, 0, a).endVertex();
+            tessellator.draw();
+        } finally {
+            GlStateManager.popMatrix();
+            restoreGuiRenderState();
+        }
     }
 
     @SubscribeEvent(priority = EventPriority.LOWEST)
@@ -192,8 +190,6 @@ public class DarknessFogHandler {
             return;
         }
 
-        previousHotbarLightmapX = OpenGlHelper.lastBrightnessX;
-        previousHotbarLightmapY = OpenGlHelper.lastBrightnessY;
         forcedHotbarLightmap = true;
         GlStateManager.setActiveTexture(OpenGlHelper.lightmapTexUnit);
         GlStateManager.enableTexture2D();
@@ -207,12 +203,18 @@ public class DarknessFogHandler {
         if (event.getType() != RenderGameOverlayEvent.ElementType.HOTBAR || !forcedHotbarLightmap) {
             return;
         }
-
-        OpenGlHelper.setLightmapTextureCoords(
-            OpenGlHelper.lightmapTexUnit,
-            previousHotbarLightmapX,
-            previousHotbarLightmapY
-        );
+        restoreGuiRenderState();
         forcedHotbarLightmap = false;
+    }
+
+    private static void restoreGuiRenderState() {
+        GlStateManager.setActiveTexture(OpenGlHelper.lightmapTexUnit);
+        OpenGlHelper.setLightmapTextureCoords(OpenGlHelper.lightmapTexUnit, 240.0f, 240.0f);
+        GlStateManager.setActiveTexture(OpenGlHelper.defaultTexUnit);
+        GlStateManager.depthMask(true);
+        GlStateManager.enableDepth();
+        GlStateManager.enableAlpha();
+        GlStateManager.disableBlend();
+        GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
     }
 }

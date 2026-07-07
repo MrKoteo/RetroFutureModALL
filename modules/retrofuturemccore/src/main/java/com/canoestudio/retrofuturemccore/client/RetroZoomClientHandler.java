@@ -3,6 +3,8 @@ package com.canoestudio.retrofuturemccore.client;
 import com.canoestudio.retrofuturemccore.api.item.zoom.RetroZoomOverlay;
 import com.canoestudio.retrofuturemccore.api.item.zoom.RetroZoomRegistry;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraftforge.client.event.FOVUpdateEvent;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
@@ -32,9 +34,31 @@ public class RetroZoomClientHandler {
         if (zoom != null) {
             RetroZoomOverlay overlay = zoom.getOverlay();
             if (overlay != null) {
-                overlay.render(event.getResolution().getScaledWidth(), event.getResolution().getScaledHeight(),
-                        event.getPartialTicks());
+                renderOverlaySafely(overlay, event);
             }
         }
+    }
+
+    private static void renderOverlaySafely(RetroZoomOverlay overlay, RenderGameOverlayEvent.Post event) {
+        GlStateManager.pushMatrix();
+        try {
+            GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
+            overlay.render(event.getResolution().getScaledWidth(), event.getResolution().getScaledHeight(),
+                    event.getPartialTicks());
+        } finally {
+            GlStateManager.popMatrix();
+            restoreGuiRenderState();
+        }
+    }
+
+    private static void restoreGuiRenderState() {
+        GlStateManager.setActiveTexture(OpenGlHelper.lightmapTexUnit);
+        OpenGlHelper.setLightmapTextureCoords(OpenGlHelper.lightmapTexUnit, 240.0F, 240.0F);
+        GlStateManager.setActiveTexture(OpenGlHelper.defaultTexUnit);
+        GlStateManager.depthMask(true);
+        GlStateManager.enableDepth();
+        GlStateManager.enableAlpha();
+        GlStateManager.disableBlend();
+        GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
     }
 }

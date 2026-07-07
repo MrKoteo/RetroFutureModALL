@@ -51,38 +51,42 @@ public class ParticleSonicBoom extends Particle {
 
         Minecraft.getMinecraft().getTextureManager().bindTexture(TEXTURES[frameIndex]);
 
-        GlStateManager.enableBlend();
-        GlStateManager.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE);
-        GlStateManager.depthMask(false);
-        GlStateManager.alphaFunc(516, 0.003921569f);
+        try {
+            GlStateManager.enableBlend();
+            GlStateManager.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE);
+            GlStateManager.depthMask(false);
+            GlStateManager.alphaFunc(516, 0.003921569f);
 
-        float scale = 0.1f * this.particleScale;
-        float minU = 0.0f;
-        float maxU = 1.0f;
-        float minV = 0.0f;
-        float maxV = 1.0f;
+            float scale = 0.1f * this.particleScale;
+            float minU = 0.0f;
+            float maxU = 1.0f;
+            float minV = 0.0f;
+            float maxV = 1.0f;
 
-        float x = (float) (this.prevPosX + (this.posX - this.prevPosX) * partialTicks - interpPosX);
-        float y = (float) (this.prevPosY + (this.posY - this.prevPosY) * partialTicks - interpPosY);
-        float z = (float) (this.prevPosZ + (this.posZ - this.prevPosZ) * partialTicks - interpPosZ);
+            float x = (float) (this.prevPosX + (this.posX - this.prevPosX) * partialTicks - interpPosX);
+            float y = (float) (this.prevPosY + (this.posY - this.prevPosY) * partialTicks - interpPosY);
+            float z = (float) (this.prevPosZ + (this.posZ - this.prevPosZ) * partialTicks - interpPosZ);
 
-        int j = 240;
-        int k = 240;
+            int j = 240;
+            int k = 240;
 
-        buffer.begin(7, DefaultVertexFormats.PARTICLE_POSITION_TEX_COLOR_LMAP);
-        buffer.pos(x - rotX * scale - rotXY * scale, y - rotZ * scale, z - rotYZ * scale - rotXZ * scale)
-            .tex(maxU, maxV).color(1.0f, 1.0f, 1.0f, this.particleAlpha).lightmap(j, k).endVertex();
-        buffer.pos(x - rotX * scale + rotXY * scale, y + rotZ * scale, z - rotYZ * scale + rotXZ * scale)
-            .tex(maxU, minV).color(1.0f, 1.0f, 1.0f, this.particleAlpha).lightmap(j, k).endVertex();
-        buffer.pos(x + rotX * scale + rotXY * scale, y + rotZ * scale, z + rotYZ * scale + rotXZ * scale)
-            .tex(minU, minV).color(1.0f, 1.0f, 1.0f, this.particleAlpha).lightmap(j, k).endVertex();
-        buffer.pos(x + rotX * scale - rotXY * scale, y - rotZ * scale, z + rotYZ * scale - rotXZ * scale)
-            .tex(minU, maxV).color(1.0f, 1.0f, 1.0f, this.particleAlpha).lightmap(j, k).endVertex();
-        Tessellator.getInstance().draw();
-
-        GlStateManager.depthMask(true);
-        GlStateManager.disableBlend();
-        GlStateManager.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
+            buffer.begin(7, DefaultVertexFormats.PARTICLE_POSITION_TEX_COLOR_LMAP);
+            buffer.pos(x - rotX * scale - rotXY * scale, y - rotZ * scale, z - rotYZ * scale - rotXZ * scale)
+                .tex(maxU, maxV).color(1.0f, 1.0f, 1.0f, this.particleAlpha).lightmap(j, k).endVertex();
+            buffer.pos(x - rotX * scale + rotXY * scale, y + rotZ * scale, z - rotYZ * scale + rotXZ * scale)
+                .tex(maxU, minV).color(1.0f, 1.0f, 1.0f, this.particleAlpha).lightmap(j, k).endVertex();
+            buffer.pos(x + rotX * scale + rotXY * scale, y + rotZ * scale, z + rotYZ * scale + rotXZ * scale)
+                .tex(minU, minV).color(1.0f, 1.0f, 1.0f, this.particleAlpha).lightmap(j, k).endVertex();
+            buffer.pos(x + rotX * scale - rotXY * scale, y - rotZ * scale, z + rotYZ * scale - rotXZ * scale)
+                .tex(minU, maxV).color(1.0f, 1.0f, 1.0f, this.particleAlpha).lightmap(j, k).endVertex();
+            Tessellator.getInstance().draw();
+        } finally {
+            GlStateManager.depthMask(true);
+            GlStateManager.alphaFunc(516, 0.1f);
+            GlStateManager.disableBlend();
+            GlStateManager.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
+            GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
+        }
     }
 
     @Override

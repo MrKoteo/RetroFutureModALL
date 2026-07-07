@@ -28,34 +28,41 @@ public class RenderHangingSign extends TileEntitySpecialRenderer<TileEntityHangi
     public void render(TileEntityHangingSign te, double x, double y, double z, float partialTicks, int destroyStage,
                        float alpha) {
         GlStateManager.pushMatrix();
-        GlStateManager.translate((float) x + 0.5F, (float) y + 0.5F, (float) z + 0.5F);
-        GlStateManager.rotate(this.getYaw(te), 0.0F, 1.0F, 0.0F);
+        boolean textureMatrixPushed = false;
+        try {
+            GlStateManager.translate((float) x + 0.5F, (float) y + 0.5F, (float) z + 0.5F);
+            GlStateManager.rotate(this.getYaw(te), 0.0F, 1.0F, 0.0F);
 
-        if (destroyStage >= 0) {
-            this.bindTexture(DESTROY_STAGES[destroyStage]);
-            GlStateManager.matrixMode(GL11.GL_TEXTURE);
-            GlStateManager.pushMatrix();
-            GlStateManager.scale(4.0F, 4.0F, 1.0F);
-            GlStateManager.translate(0.0625F, 0.0625F, 0.0625F);
-            GlStateManager.matrixMode(GL11.GL_MODELVIEW);
-        } else {
-            this.bindTexture(TEXTURE);
-        }
+            if (destroyStage >= 0) {
+                this.bindTexture(DESTROY_STAGES[destroyStage]);
+                GlStateManager.matrixMode(GL11.GL_TEXTURE);
+                GlStateManager.pushMatrix();
+                textureMatrixPushed = true;
+                GlStateManager.scale(4.0F, 4.0F, 1.0F);
+                GlStateManager.translate(0.0625F, 0.0625F, 0.0625F);
+                GlStateManager.matrixMode(GL11.GL_MODELVIEW);
+            } else {
+                this.bindTexture(TEXTURE);
+            }
 
-        GlStateManager.enableRescaleNormal();
-        GlStateManager.disableCull();
-        this.renderBoard();
-        this.renderChains(te);
-        GlStateManager.enableCull();
-        this.renderText(te);
-
-        if (destroyStage >= 0) {
-            GlStateManager.matrixMode(GL11.GL_TEXTURE);
+            GlStateManager.enableRescaleNormal();
+            GlStateManager.disableCull();
+            this.renderBoard();
+            this.renderChains(te);
+            GlStateManager.enableCull();
+            this.renderText(te);
+        } finally {
+            if (textureMatrixPushed) {
+                GlStateManager.matrixMode(GL11.GL_TEXTURE);
+                GlStateManager.popMatrix();
+                GlStateManager.matrixMode(GL11.GL_MODELVIEW);
+            }
+            GlStateManager.disableRescaleNormal();
+            GlStateManager.enableCull();
+            GlStateManager.depthMask(true);
+            GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
             GlStateManager.popMatrix();
-            GlStateManager.matrixMode(GL11.GL_MODELVIEW);
         }
-
-        GlStateManager.popMatrix();
     }
 
     private float getYaw(TileEntityHangingSign te) {
