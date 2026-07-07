@@ -1,7 +1,7 @@
-package com.canoestudio.retrofuturethewildupdate.block;
+package com.canoestudio.retrofuturetrailsandtales.block;
 
-import com.canoestudio.retrofuturethewildupdate.RTWU;
-import com.canoestudio.retrofuturethewildupdate.item.ModItems;
+import com.canoestudio.retrofuturetrailsandtales.RTAT;
+import com.canoestudio.retrofuturetrailsandtales.item.ModItems;
 import java.util.Random;
 import javax.annotation.Nullable;
 import net.minecraft.block.Block;
@@ -31,8 +31,8 @@ public abstract class BlockWildHangingSignBase extends BlockContainer {
 
     protected BlockWildHangingSignBase(String name) {
         super(Material.WOOD);
-        this.setRegistryName(RTWU.ID, name);
-        this.setTranslationKey(RTWU.ID + ".mangrove_hanging_sign");
+        this.setRegistryName(RTAT.ID, name);
+        this.setTranslationKey(RTAT.ID + ".mangrove_hanging_sign");
         this.setHardness(1.0F);
         this.setResistance(1.0F);
         this.setSoundType(SoundType.WOOD);

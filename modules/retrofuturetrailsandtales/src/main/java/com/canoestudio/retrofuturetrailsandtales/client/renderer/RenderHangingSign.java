@@ -1,12 +1,13 @@
-package com.canoestudio.retrofuturethewildupdate.client.renderer;
+package com.canoestudio.retrofuturetrailsandtales.client.renderer;
 
-import com.canoestudio.retrofuturethewildupdate.RTWU;
-import com.canoestudio.retrofuturethewildupdate.block.BlockMangroveHangingSign;
-import com.canoestudio.retrofuturethewildupdate.block.BlockMangroveWallHangingSign;
-import com.canoestudio.retrofuturethewildupdate.block.ModBlocks;
-import com.canoestudio.retrofuturethewildupdate.block.TileEntityHangingSign;
+import com.canoestudio.retrofuturetrailsandtales.RTAT;
+import com.canoestudio.retrofuturetrailsandtales.block.BlockMangroveHangingSign;
+import com.canoestudio.retrofuturetrailsandtales.block.BlockMangroveWallHangingSign;
+import com.canoestudio.retrofuturetrailsandtales.block.ModBlocks;
+import com.canoestudio.retrofuturetrailsandtales.block.TileEntityHangingSign;
 import java.util.List;
 import net.minecraft.block.Block;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.GuiUtilRenderComponents;
 import net.minecraft.client.renderer.BufferBuilder;
@@ -22,7 +23,7 @@ import org.lwjgl.opengl.GL11;
 public class RenderHangingSign extends TileEntitySpecialRenderer<TileEntityHangingSign> {
 
     private static final ResourceLocation TEXTURE =
-        new ResourceLocation(RTWU.ID, "textures/blocks/mangrove_hanging_sign.png");
+        new ResourceLocation(RTAT.ID, "textures/blocks/mangrove_hanging_sign.png");
 
     @Override
     public void render(TileEntityHangingSign te, double x, double y, double z, float partialTicks, int destroyStage,
@@ -66,15 +67,21 @@ public class RenderHangingSign extends TileEntitySpecialRenderer<TileEntityHangi
     }
 
     private float getYaw(TileEntityHangingSign te) {
-        Block block = te.getBlockType();
+        IBlockState state = this.getState(te);
+        Block block = state == null ? te.getBlockType() : state.getBlock();
         if (block == ModBlocks.MANGROVE_HANGING_SIGN) {
-            int rotation = te.getBlockMetadata();
+            int rotation = state == null ? te.getBlockMetadata() : state.getValue(BlockMangroveHangingSign.ROTATION);
             return -((float) rotation * 360.0F / 16.0F);
         }
         if (block == ModBlocks.MANGROVE_WALL_HANGING_SIGN) {
-            return -te.getWallFacing().getHorizontalAngle();
+            return -(state == null ? te.getWallFacing() : state.getValue(BlockMangroveWallHangingSign.FACING))
+                .getHorizontalAngle();
         }
         return 0.0F;
+    }
+
+    private IBlockState getState(TileEntityHangingSign te) {
+        return te.getWorld() == null || te.getPos() == null ? null : te.getWorld().getBlockState(te.getPos());
     }
 
     private void renderBoard() {
@@ -83,7 +90,8 @@ public class RenderHangingSign extends TileEntitySpecialRenderer<TileEntityHangi
     }
 
     private void renderChains(TileEntityHangingSign te) {
-        Block block = te.getBlockType();
+        IBlockState state = this.getState(te);
+        Block block = state == null ? te.getBlockType() : state.getBlock();
         if (block == ModBlocks.MANGROVE_WALL_HANGING_SIGN) {
             drawBox(-0.5F, 0.375F, -0.125F, 0.5F, 0.5F, 0.125F,
                 0.0F, 2.0F / 32.0F, 16.0F / 32.0F, 6.0F / 32.0F);

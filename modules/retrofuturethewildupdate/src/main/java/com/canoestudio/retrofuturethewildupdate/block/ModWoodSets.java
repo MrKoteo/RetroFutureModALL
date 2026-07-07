@@ -2,7 +2,6 @@ package com.canoestudio.retrofuturethewildupdate.block;
 
 import com.canoestudio.retrofuturemccore.api.block.RetroBlockFamily;
 import com.canoestudio.retrofuturemccore.api.block.RetroBoatSet;
-import com.canoestudio.retrofuturemccore.api.block.RetroSignSet;
 import com.canoestudio.retrofuturemccore.api.block.RetroWoodSet;
 import com.canoestudio.retrofuturethewildupdate.RTWU;
 import com.canoestudio.retrofuturethewildupdate.entity.EntityMangroveBoat;
@@ -22,14 +21,6 @@ public final class ModWoodSets {
         .trapdoor(ModBlocks.MANGROVE_TRAPDOOR)
         .pressurePlate(ModBlocks.MANGROVE_PRESSURE_PLATE)
         .button(ModBlocks.MANGROVE_BUTTON)
-        .hangingSign(ModBlocks.MANGROVE_HANGING_SIGN, ModBlocks.MANGROVE_WALL_HANGING_SIGN)
-        .build();
-
-    public static final RetroSignSet MANGROVE_SIGNS = RetroSignSet.builder(key("mangrove"))
-        .hangingSign(ModBlocks.MANGROVE_HANGING_SIGN, ModBlocks.MANGROVE_WALL_HANGING_SIGN,
-            ModItems.MANGROVE_HANGING_SIGN)
-        .hangingSignTile(TileEntityHangingSign.class)
-        .texture(key("textures/blocks/mangrove_hanging_sign.png"))
         .build();
 
     public static final RetroBoatSet MANGROVE_BOATS = RetroBoatSet.builder(key("mangrove"))
@@ -47,7 +38,6 @@ public final class ModWoodSets {
         .block("roots", ModBlocks.MANGROVE_ROOTS)
         .block("muddy_roots", ModBlocks.MUDDY_MANGROVE_ROOTS)
         .family(MANGROVE_FAMILY)
-        .signs(MANGROVE_SIGNS)
         .boats(MANGROVE_BOATS)
         .register();
 

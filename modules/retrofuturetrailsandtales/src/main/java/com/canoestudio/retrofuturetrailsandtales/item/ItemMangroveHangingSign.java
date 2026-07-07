@@ -1,10 +1,10 @@
-package com.canoestudio.retrofuturethewildupdate.item;
+package com.canoestudio.retrofuturetrailsandtales.item;
 
-import com.canoestudio.retrofuturethewildupdate.RTWU;
-import com.canoestudio.retrofuturethewildupdate.block.BlockMangroveHangingSign;
-import com.canoestudio.retrofuturethewildupdate.block.BlockMangroveWallHangingSign;
-import com.canoestudio.retrofuturethewildupdate.block.ModBlocks;
-import com.canoestudio.retrofuturethewildupdate.block.TileEntityHangingSign;
+import com.canoestudio.retrofuturetrailsandtales.RTAT;
+import com.canoestudio.retrofuturetrailsandtales.block.BlockMangroveHangingSign;
+import com.canoestudio.retrofuturetrailsandtales.block.BlockMangroveWallHangingSign;
+import com.canoestudio.retrofuturetrailsandtales.block.ModBlocks;
+import com.canoestudio.retrofuturetrailsandtales.block.TileEntityHangingSign;
 import net.minecraft.advancements.CriteriaTriggers;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
@@ -26,8 +26,8 @@ public class ItemMangroveHangingSign extends Item {
 
     public ItemMangroveHangingSign() {
         this.maxStackSize = 16;
-        this.setRegistryName(RTWU.ID, "mangrove_hanging_sign");
-        this.setTranslationKey(RTWU.ID + ".mangrove_hanging_sign");
+        this.setRegistryName(RTAT.ID, "mangrove_hanging_sign");
+        this.setTranslationKey(RTAT.ID + ".mangrove_hanging_sign");
         this.setCreativeTab(CreativeTabs.DECORATIONS);
     }
 

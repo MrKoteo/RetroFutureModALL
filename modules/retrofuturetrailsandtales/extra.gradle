@@ -1,0 +1,5 @@
+dependencies {
+    implementation project(':retrofuturemccore')
+    implementation project(':retrofuturemc')
+    implementation project(':retrofuturethewildupdate')
+}

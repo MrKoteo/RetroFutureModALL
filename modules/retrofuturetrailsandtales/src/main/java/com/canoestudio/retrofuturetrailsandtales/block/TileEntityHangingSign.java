@@ -1,4 +1,4 @@
-package com.canoestudio.retrofuturethewildupdate.block;
+package com.canoestudio.retrofuturetrailsandtales.block;
 
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntitySign;
